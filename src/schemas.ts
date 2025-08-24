@@ -1,15 +1,41 @@
 import { z } from "zod";
 
 /**
- * Allowed color options for the TaskItem form.
+ * Allowed color options for Task items (names).
+ * Feel free to reorder these to your preference.
  */
-export const taskColors = ["red", "blue", "green"] as const;
+export const taskColors = [
+  "red",
+  "orange",
+  "yellow",
+  "green",
+  "blue",
+  "indigo",
+  "purple",
+  "pink",
+  "brown",
+] as const;
 
 /**
  * Zod enum schema and TS type for task color.
  */
 export const TaskColorSchema = z.enum(taskColors);
 export type TaskColor = z.infer<typeof TaskColorSchema>;
+
+/**
+ * Name -> Hex map for rendering.
+ */
+export const taskColorHex: Record<TaskColor, string> = {
+  red: "#FF3B30",
+  orange: "#FF9500",
+  yellow: "#FFCC00",
+  green: "#34C759",
+  blue: "#007AFF",
+  indigo: "#5856D6",
+  purple: "#AF52DE",
+  pink: "#FF2D55",
+  brown: "#A2845E",
+};
 
 /**
  * Create TaskItem schema and type.

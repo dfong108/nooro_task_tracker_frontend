@@ -32,11 +32,19 @@ body {
 
 @layer utilities {
   .null {
-    @apply text-[#808080];
+    @apply text-[#808080] opacity-70;
   }
 
   .button {
-    @apply cursor-pointer;
+    @apply cursor-pointer text-foreground/70 hover:text-foreground/80 hover:text-lg transition-all ease-in-out duration-500;
+  }
+
+  .form-label {
+    @apply mb-1 block text-sm font-medium text-primary cursor-pointer;
+  }
+
+  .form-input {
+    @apply w-full rounded border border-foreground/10 bg-[#262626] px-3 py-2 outline-none focus:ring-2 focus:ring-primary/50
   }
 }
 
