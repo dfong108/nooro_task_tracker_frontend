@@ -5,13 +5,11 @@ import {CiCirclePlus} from "react-icons/ci";
 import {useRouter} from 'next/navigation';
 import type {Task} from '@/types';
 import {
-  CreateTaskSchema,
-  UpdateTaskSchema,
   defaultCreateTaskValues,
   TaskColorSchema,
   type TaskColor,
   taskColors,
-  taskColorHex,
+  taskColorHex, CreateTaskInput, UpdateTaskInput,
 } from '@/schemas';
 import {IoArrowBackOutline} from "react-icons/io5";
 import TaskActionButton from "@/components/TaskActionButton";
@@ -41,69 +39,80 @@ function resolveInitialColorName(input?: string | null): TaskColor {
 export default function TaskForm({task, onSuccess}: TaskFormProps) {
   const router = useRouter();
   const isEdit = Boolean(task);
+  const initialNewTask:Task = {title:"", color:defaultCreateTaskValues.color, id:"", completed:false};
   
-  const [title, setTitle] = useState(task?.title ?? defaultCreateTaskValues.title);
+  const [formData, setFormData] = useState<Task>(task ?? initialNewTask)
+  /*const [title, setTitle] = useState(task?.title ?? defaultCreateTaskValues.title);
   const [color, setColor] = useState<TaskColor>(resolveInitialColorName(task?.color));
-  const [completed, setCompleted] = useState<boolean>(task?.completed ?? false);
-  const [submitting, setSubmitting] = useState(false);
+  const [isCompleted, setIsIsCompleted] = useState<boolean>(task?.completed ?? false);*/
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const [error, setError] = useState<string | null>(null);
   
   const {clientBaseUrl} = API_CONFIG;
   
   const colorOptions = useMemo(() => taskColors, []);
   
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setSubmitting(true);
-    setError(null);
-    
-    const baseValues = {title, color};
-    const parsed = isEdit
-      ? UpdateTaskSchema.safeParse({id: task!.id, ...baseValues})
-      : CreateTaskSchema.safeParse(baseValues);
-    
-    if (!parsed.success) {
-      const first = parsed.error.issues[0];
-      setError(first?.message ?? 'Invalid form data');
-      setSubmitting(false);
-      return;
-    }
-    
-    try {
-      const url = isEdit
-        ? `${clientBaseUrl}/api/tasks/${task!.id}`
-        : `${clientBaseUrl}/tasks`;
-      const method = isEdit ? 'PATCH' : 'POST';
-      
-      if (process.env.NEXT_PUBLIC_USE_SEEDS === 'true') router.push('/');
-      
-      console.log("Create New Task", {url, method, baseValues, completed})
-      const res = await fetch(url, {
-        method,
-        headers: {'Content-Type': 'application/json'},
-        // We send the validated fields plus completed (if present in your API)
-        body: JSON.stringify({...baseValues, completed}),
-      });
-      
-      if (!res.ok) {
-        throw new Error(
-          `${isEdit ? 'Failed to update' : 'Failed to create'} task (${res.status})`
-        );
-      }
-      
-      const saved: Task = await res.json();
-      onSuccess?.(saved);
-      router.push('/');
-      router.refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unknown error');
-    } finally {
-      setSubmitting(false);
-    }
+  const isModified = () => {
+    const {title, color, completed} = formData;
+    return (
+      title !== (task?.title ?? defaultCreateTaskValues.title) ||
+      color !== resolveInitialColorName(task?.color) ||
+      completed !== (task?.completed ?? false)
+    );
   }
   
+  const handleUpdateFormData = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, type, value, checked } = e.target as HTMLInputElement;
+    
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+    
+    // Reset error when user starts typing/changing values
+    if (error) setError(null);
+  };
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    try {
+      const url = task?.id
+        ? `/api/tasks/${task.id}`
+        : '/api/tasks';
+      
+      const method = task?.id ? 'PUT' : 'POST';
+      const {title, color, completed} = formData;
+      
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title, color, completed }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      router.push('/');
+      router.refresh();
+    } catch (error) {
+      console.error('Failed to save task:', error);
+      // Here you might want to show an error message to the user
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {/* Back arrow button */}
       <div className="mb-2">
         <IoArrowBackOutline size={20} className="button" onClick={() => router.back()}/>
@@ -120,10 +129,11 @@ export default function TaskForm({task, onSuccess}: TaskFormProps) {
             id="title"
             type="text"
             required
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            value={formData.title}
+            onChange={(e) => handleUpdateFormData(e)}
             className="form-input"
             placeholder="Ex. Brush your teeth"
+            name="title"
           />
         </div>
         
@@ -133,7 +143,7 @@ export default function TaskForm({task, onSuccess}: TaskFormProps) {
           <div className="flex gap-1 sm:grid-cols-9">
             {colorOptions.map((name) => {
               const hex = taskColorHex[name];
-              const selected = color === name;
+              const selected = formData.color === name;
               return (
                 <label
                   key={name}
@@ -142,10 +152,11 @@ export default function TaskForm({task, onSuccess}: TaskFormProps) {
                 >
                   <input
                     type="radio"
+                    id="color"
                     name="color"
                     value={name}
                     checked={selected}
-                    onChange={() => setColor(name)}
+                    onChange={e => handleUpdateFormData(e)}
                     className="peer sr-only"
                     aria-label={name}
                   />
@@ -166,9 +177,11 @@ export default function TaskForm({task, onSuccess}: TaskFormProps) {
         {isEdit && (
           <label className="form-label mt-2 inline-flex items-center justify-center space-x-4 text-sm">
             <input
+              id="completed"
+              name="completed"
               type="checkbox"
-              checked={completed}
-              onChange={(e) => setCompleted(e.target.checked)}
+              checked={formData.completed}
+              onChange={(e) => handleUpdateFormData(e)}
               className="h-4 w-4"
             />
             <span>Mark as complete</span>
@@ -180,8 +193,8 @@ export default function TaskForm({task, onSuccess}: TaskFormProps) {
       <div className="flex items-center gap-3 mt-10">
         <TaskActionButton
           type="submit"
-          disabled={submitting}
-          description={submitting
+          disabled={isSubmitting && !isModified()}
+          description={isSubmitting
             ? (isEdit ? 'Saving…' : 'Creating…')
             : isEdit ? 'Save' : 'Add task'}
           icon={isEdit ? <FaCheck size={20}/> : <CiCirclePlus size={20}/>}

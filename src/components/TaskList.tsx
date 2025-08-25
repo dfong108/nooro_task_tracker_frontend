@@ -54,18 +54,18 @@ export default function TaskList() {
     };
   }, [clientBaseUrl]);
   
-  const noTasksFoundMessages:ReactNode[] = [
+  const noTasksFoundMessages: ReactNode[] = [
     <p className="font-bold">You don't have any tasks registered yet.</p>,
     <p>Create tasks and organize your to-do items.</p>
   ];
   
-  const loadingTasksMessages:ReactNode[] = [
+  const loadingTasksMessages: ReactNode[] = [
     <p className="font-bold">Loading Tasks</p>
   ]
   
   // Navigate to the Create Task page
   const handleCreateTask = () => {
-    router.push('/new');
+    router.push('/tasks/new');
   };
   
   /**
@@ -78,27 +78,31 @@ export default function TaskList() {
    * @param {boolean} isCompleted - The new completion status of the task.
    * @throws {Error} If the server request fails, sets an error message in the state.
    */
-  const handleToggleCompleteTask = async (id: string, isCompleted: boolean) => {
-    /*setTasks((prev) =>
-      prev.map((t) => (t.id === id ? {...t, completed: !isCompleted} : t))
-    );*/
-    
-    if (process.env.NEXT_PUBLIC_USE_SEEDS === 'true') return;
-    
+  const handleToggleCompleteTask = async (taskId: string, nextCompleted: boolean) => {
     try {
-      console.log("Toggle Complete Task", {id, isCompleted})
-      const res = await fetch(`${clientBaseUrl}/tasks/${id}`, {
+      const response = await fetch(`${clientBaseUrl}/tasks/${taskId}`, {
         method: 'PATCH',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({completed: isCompleted}),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({completed: nextCompleted}),
       });
-      if (!res.ok) throw new Error(`Failed to update task (${res.status})`);
-    } catch (e) {
-      // revert on error
-      setTasks((prev) =>
-        prev.map((t) => (t.id === id ? {...t, completed: !isCompleted} : t))
+      
+      if (!response.ok) {
+        throw new Error(`Failed to update task: ${response.statusText}`);
+      }
+      
+      const {data: updatedTask} = await response.json();
+      
+      // Update the tasks list with the new state
+      setTasks((currentTasks) =>
+        currentTasks.map((task) =>
+          task.id === taskId ? updatedTask : task
+        )
       );
-      setError(e instanceof Error ? e.message : 'Unknown error');
+    } catch (error) {
+      console.error('Error toggling task completion:', error);
+      // Optionally show an error notification to the user
     }
   };
   
@@ -118,22 +122,21 @@ export default function TaskList() {
     
     if (process.env.NEXT_PUBLIC_USE_SEEDS != 'true') {
       try {
-        const res = await fetch(`${clientBaseUrl}/api/tasks/${id}`, {
+        const res = await fetch(`${clientBaseUrl}/tasks/${id}`, { // Changed from ${clientBaseUrl}/api/tasks/${id}
           method: 'DELETE',
         });
+        
         if (!res.ok) throw new Error(`Failed to delete task (${res.status})`);
       } catch (e) {
-        // revert on error
         setTasks(prev);
         setError(e instanceof Error ? e.message : 'Unknown error');
       }
     }
   };
   
+  if (error != null) return <div>Error: {error}</div>;
   
-  if (error) return <div>Error: {error}</div>;
-  
-  if (isLoading) return <TaskPlaceholderView messages={loadingTasksMessages} />;
+  if (isLoading) return <TaskPlaceholderView messages={loadingTasksMessages}/>;
   
   return (
     <div className="relative flex flex-col w-full min-h-full">
@@ -165,7 +168,7 @@ export default function TaskList() {
         
         {/* TaskItem List */}
         {tasks.length === 0 ?
-          <TaskPlaceholderView messages={noTasksFoundMessages} />
+          <TaskPlaceholderView messages={noTasksFoundMessages}/>
           : (
             <ul>
               {tasks?.map(t => (

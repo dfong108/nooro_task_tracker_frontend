@@ -16,6 +16,17 @@ export function forwardHeaders(req: NextRequest, includeContentType = false): Re
 }
 
 export function responseFrom(res: Response, body: string) {
+  // Special handling for 204 No Content responses
+  if (res.status === 204) {
+    return new NextResponse(null, {
+      status: 204,
+      headers: {
+        'content-type': 'application/json',
+      },
+    });
+  }
+
+  // Handle all other responses as before
   return new NextResponse(body, {
     status: res.status,
     headers: { 'content-type': res.headers.get('content-type') ?? 'application/json' },

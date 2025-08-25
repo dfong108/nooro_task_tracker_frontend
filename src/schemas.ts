@@ -45,6 +45,7 @@ export const taskColorHex: Record<TaskColor, string> = {
 export const CreateTaskSchema = z.object({
   title: z.string().trim().min(1, "Title is required"),
   color: TaskColorSchema,
+  completed: z.boolean().optional(),
 });
 export type CreateTaskInput = z.infer<typeof CreateTaskSchema>;
 

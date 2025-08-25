@@ -1,34 +1,35 @@
-// src/app/tasks/[id]/edit/page.tsx
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import TaskForm from '@/components/TaskForm';
 import type { Task } from '@/types';
-import {taskSeeds} from "../../../../public/taskSeeds";
 
 type PageProps = { params: { id: string } };
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
-
 async function getTask(id: string): Promise<Task> {
-  if (process.env.NEXT_PUBLIC_USE_SEEDS === 'true') return taskSeeds.find(t => t.id === id) ?? notFound();
+  // Make sure to handle relative URLs properly by using the full URL
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const url = new URL(`/api/tasks/${id}`, baseUrl);
   
-  const res = await fetch(`${API_BASE}/tasks/${id}`, { cache: 'no-store' });
+  const res = await fetch(url, { 
+    cache: 'no-store',
+  });
+  
   if (res.status === 404) notFound();
   if (!res.ok) throw new Error(`Failed to load task (${res.status})`);
-  return res.json();
+  
+  const { data } = await res.json();
+  return data;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await Promise.resolve(params);
   const title = 'Edit Task';
-  return { title, description: `Edit task ${params.id}` };
+  return { title, description: `Edit task ${id}` };
 }
 
 export default async function Page({ params }: PageProps) {
-  const task = await getTask(params.id).then(t => {
-    console.log("Get Task: ", t)
-    return t
-  });
+  const { id } = await Promise.resolve(params);
+  const task = await getTask(id);
   
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6 lg:px-8">

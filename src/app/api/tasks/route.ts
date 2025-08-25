@@ -32,26 +32,24 @@ export async function GET(req: NextRequest) {
 
 // Create Task - POST /api/tasks
 export async function POST(req: NextRequest) {
-  const url = new URL(req.url);
-  const target = `${serverBaseUrl}/api/tasks${url.search}`;
-  
-  const taskData = await req.json();
+  const body = await req.text();
+  const target = `${serverBaseUrl}/api/tasks`;
   
   const res = await fetch(target, {
     method: 'POST',
     headers: {
-      ...forwardHeaders(req, true),
+      ...forwardHeaders(req),
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(taskData),
+    body,
   });
   
-  const resBody = await res.text();
-  console.log("Create Task Response", {
+  const responseBody = await res.text();
+  console.log("Create Task", {
+    target,
     status: res.status,
-    headers: Object.fromEntries(res.headers.entries()),
-    body: resBody
+    body: responseBody
   });
   
-  return responseFrom(res, resBody);
+  return responseFrom(res, responseBody);
 }

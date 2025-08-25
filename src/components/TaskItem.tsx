@@ -35,7 +35,7 @@ const TaskItem = ({task, onToggle, onDelete}: TaskItemProps) => {
       {/* Title */}
       <Link
         className={`flex-1 text-sm sm:text-base hover:underline transition-all duration-500 ${task.completed ? "line-through null" : ""}`}
-        href={`/${task.id}/edit`}>
+        href={`/tasks/${task.id}/edit`}>  {/* Updated path */}
         {task.title}
       </Link>
       
