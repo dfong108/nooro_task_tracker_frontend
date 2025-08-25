@@ -10,6 +10,7 @@ import TaskActionButton from "@/components/TaskActionButton";
 import {useRouter} from "next/navigation";
 import {taskSeeds} from "../../public/taskSeeds";
 import TaskPlaceholderView from "@/components/TaskPlaceholderView";
+import {API_CONFIG} from "../../apiConfig";
 
 
 export default function TaskList() {
@@ -18,7 +19,7 @@ export default function TaskList() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001'; // replace PORT as needed
+  const {clientBaseUrl} = API_CONFIG;
   
   useEffect(() => {
     let cancelled = false;
@@ -33,10 +34,11 @@ export default function TaskList() {
           setIsLoading(false);
           return
         }
-        const res = await fetch(`${API_BASE}/api/tasks`, {
-        });
+        console.log(`${clientBaseUrl}/api/tasks`)
+        const res = await fetch(`${clientBaseUrl}/tasks`);
         if (!res.ok) throw new Error(`Failed to fetch tasks (${res.status})`);
-        const data: Task[] = await res.json();
+        const {data} = await res.json() as { data: Task[] };
+        console.log("Get All Tasks: ", data)
         if (!cancelled) setTasks(data);
         setIsLoading(false);
       } catch (e) {
@@ -50,7 +52,7 @@ export default function TaskList() {
     return () => {
       cancelled = true;
     };
-  }, [API_BASE]);
+  }, [clientBaseUrl]);
   
   const noTasksFoundMessages:ReactNode[] = [
     <p className="font-bold">You don't have any tasks registered yet.</p>,
@@ -77,14 +79,15 @@ export default function TaskList() {
    * @throws {Error} If the server request fails, sets an error message in the state.
    */
   const handleToggleCompleteTask = async (id: string, isCompleted: boolean) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? {...t, completed: isCompleted} : t))
-    );
+    /*setTasks((prev) =>
+      prev.map((t) => (t.id === id ? {...t, completed: !isCompleted} : t))
+    );*/
     
     if (process.env.NEXT_PUBLIC_USE_SEEDS === 'true') return;
     
     try {
-      const res = await fetch(`${API_BASE}/api/tasks/${id}`, {
+      console.log("Toggle Complete Task", {id, isCompleted})
+      const res = await fetch(`${clientBaseUrl}/tasks/${id}`, {
         method: 'PATCH',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({completed: isCompleted}),
@@ -115,7 +118,7 @@ export default function TaskList() {
     
     if (process.env.NEXT_PUBLIC_USE_SEEDS != 'true') {
       try {
-        const res = await fetch(`${API_BASE}/api/tasks/${id}`, {
+        const res = await fetch(`${clientBaseUrl}/api/tasks/${id}`, {
           method: 'DELETE',
         });
         if (!res.ok) throw new Error(`Failed to delete task (${res.status})`);
@@ -169,8 +172,8 @@ export default function TaskList() {
                 <TaskItem
                   key={t.id}
                   task={t}
-                  onDelete={() => handleDeleteTask(t.id)}
-                  onToggle={() => handleToggleCompleteTask(t.id, t.completed)}
+                  onDelete={handleDeleteTask}
+                  onToggle={handleToggleCompleteTask}
                 />
               ))}
             </ul>

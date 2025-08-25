@@ -23,7 +23,7 @@ const TaskItem = ({task, onToggle, onDelete}: TaskItemProps) => {
         type="button"
         aria-label={task.completed ? "Mark as not completed" : "Mark as completed"}
         onClick={() => onToggle(task.id, !task.completed)}
-        className="grid h-5 w-5 shrink-0 place-items-center rounded-full border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-secondary/50"
+        className="grid h-5 w-5 shrink-0 place-items-center rounded-full border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-secondary/50 cursor-pointer"
         style={{
           borderColor: task.completed ? "transparent" : primaryColor,
           backgroundColor: task.completed ? secondaryColor : "transparent",
@@ -44,7 +44,7 @@ const TaskItem = ({task, onToggle, onDelete}: TaskItemProps) => {
         type="button"
         aria-label="Delete task"
         onClick={() => onDelete(task.id)}
-        className="shrink-0 rounded p-2 hover:bg-foreground/5 focus:outline-none focus:ring-2 focus:ring-secondary/50"
+        className="shrink-0 rounded p-2 hover:bg-foreground/5 focus:outline-none focus:ring-2 focus:ring-secondary/50 cursor-pointer"
         title="Delete task"
       >
         <FiTrash2 className="text-foreground/70" size={18}/>

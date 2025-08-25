@@ -13,7 +13,7 @@ const API_BASE =
 async function getTask(id: string): Promise<Task> {
   if (process.env.NEXT_PUBLIC_USE_SEEDS === 'true') return taskSeeds.find(t => t.id === id) ?? notFound();
   
-  const res = await fetch(`${API_BASE}/api/tasks/${id}`, { cache: 'no-store' });
+  const res = await fetch(`${API_BASE}/tasks/${id}`, { cache: 'no-store' });
   if (res.status === 404) notFound();
   if (!res.ok) throw new Error(`Failed to load task (${res.status})`);
   return res.json();
@@ -25,7 +25,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function Page({ params }: PageProps) {
-  const task = await getTask(params.id);
+  const task = await getTask(params.id).then(t => {
+    console.log("Get Task: ", t)
+    return t
+  });
   
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6 lg:px-8">

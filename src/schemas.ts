@@ -5,15 +5,15 @@ import { z } from "zod";
  * Feel free to reorder these to your preference.
  */
 export const taskColors = [
-  "red",
-  "orange",
-  "yellow",
-  "green",
-  "blue",
-  "indigo",
-  "purple",
-  "pink",
-  "brown",
+  "RED",
+  "ORANGE",
+  "YELLOW",
+  "GREEN",
+  "BLUE",
+  "INDIGO",
+  "PURPLE",
+  "PINK",
+  "BROWN",
 ] as const;
 
 /**
@@ -26,15 +26,15 @@ export type TaskColor = z.infer<typeof TaskColorSchema>;
  * Name -> Hex map for rendering.
  */
 export const taskColorHex: Record<TaskColor, string> = {
-  red: "#FF3B30",
-  orange: "#FF9500",
-  yellow: "#FFCC00",
-  green: "#34C759",
-  blue: "#007AFF",
-  indigo: "#5856D6",
-  purple: "#AF52DE",
-  pink: "#FF2D55",
-  brown: "#A2845E",
+  RED: "#FF3B30",
+  ORANGE: "#FF9500",
+  YELLOW: "#FFCC00",
+  GREEN: "#34C759",
+  BLUE: "#007AFF",
+  INDIGO: "#5856D6",
+  PURPLE: "#AF52DE",
+  PINK: "#FF2D55",
+  BROWN: "#A2845E",
 };
 
 /**
@@ -63,7 +63,7 @@ export type UpdateTaskInput = z.infer<typeof UpdateTaskSchema>;
  */
 export const defaultCreateTaskValues: CreateTaskInput = {
   title: "",
-  color: "blue",
+  color: "BLUE",
 };
 
 /**

@@ -16,6 +16,7 @@ import {
 import {IoArrowBackOutline} from "react-icons/io5";
 import TaskActionButton from "@/components/TaskActionButton";
 import {FaCheck} from "react-icons/fa";
+import {API_CONFIG} from "../../apiConfig";
 
 type TaskFormProps = {
   task?: Task | null;
@@ -47,7 +48,7 @@ export default function TaskForm({task, onSuccess}: TaskFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
+  const {clientBaseUrl} = API_CONFIG;
   
   const colorOptions = useMemo(() => taskColors, []);
   
@@ -70,12 +71,13 @@ export default function TaskForm({task, onSuccess}: TaskFormProps) {
     
     try {
       const url = isEdit
-        ? `${API_BASE}/api/tasks/${task!.id}`
-        : `${API_BASE}/api/tasks`;
+        ? `${clientBaseUrl}/api/tasks/${task!.id}`
+        : `${clientBaseUrl}/tasks`;
       const method = isEdit ? 'PATCH' : 'POST';
       
       if (process.env.NEXT_PUBLIC_USE_SEEDS === 'true') router.push('/');
       
+      console.log("Create New Task", {url, method, baseValues, completed})
       const res = await fetch(url, {
         method,
         headers: {'Content-Type': 'application/json'},
